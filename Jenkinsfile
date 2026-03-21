@@ -1,9 +1,10 @@
-node {
+pipeline {
+    agent any
 
-    try {
-
+    stages {
         stage('Build') {
-            sh '''
+            steps {
+                sh '''
                 echo "Building Java project..."
                 echo "Listing workspace contents:"
                 ls
@@ -14,11 +15,13 @@ node {
                 javac -d build src/*.java
 
                 echo "Build successful"
-            '''
+                '''
+            }
         }
 
         stage('Test') {
-            sh '''
+            steps {
+                sh '''
                 echo "Running JUnit tests for File-Encrypter..."
 
                 cd "Password Protection"
@@ -32,9 +35,7 @@ node {
 
                 # Compile test files
                 mkdir -p test-build
-
-                javac -cp junit-platform-console-standalone.jar:build \
-                -d test-build test/*.java
+                javac -cp junit-platform-console-standalone.jar:build -d test-build test/*.java
 
                 # Run JUnit tests
                 java -jar junit-platform-console-standalone.jar \
@@ -42,28 +43,32 @@ node {
                 --scan-class-path
 
                 echo "JUnit tests executed successfully"
-            '''
+                '''
+            }
         }
 
         stage('Deploy') {
-            sh '''
+            steps {
+                sh '''
                 echo "Deploying (Packaging) File-Encrypter Application..."
 
                 cd "Password Protection"
 
-                # Create executable artifact (JAR)
+                # Create JAR
                 jar cf FileEncrypter.jar -C build .
 
                 echo "Deployment successful - Artifact ready"
-            '''
+                '''
+            }
         }
+    }
 
-        echo "Pipeline executed successfully!"
-
-    } catch (Exception e) {
-
-        echo "Pipeline failed!"
-        throw e
-
+    post {
+        success {
+            echo "Pipeline executed successfully!"
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
     }
 }
